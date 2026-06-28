@@ -1,0 +1,49 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.pyo
+.DS_Store
+.atom/
+.buildlog/
+.history
+.idea/
+.project
+.directory
+.trash/
+*.iml
+.vscode/
+
+# Flutter/Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+/build/
+
+# Android
+.gradle/
+local.properties
+**/android/app/key.properties
+**/android/app/*.keystore
+**/android/app/*.jks
+
+# iOS
+.sandbox.log
+Pods/
+/ios/.symlinks/
+/ios/Flutter/Flutter.framework
+/ios/Flutter/Flutter.podspec
+/ios/Flutter/Generated.xcconfig
+/ios/Flutter/app.flx
+/ios/Flutter/app.zip
+/ios/Flutter/flutter_assets/
+/ios/Flutter/flutter_export_environment.sh
+
+# Python / Raspberry Pi
+__pycache__/
+Frimware/phase_1/pi/evidence/
+Frimware/phase_1/pi/config.json
+*.tflite
