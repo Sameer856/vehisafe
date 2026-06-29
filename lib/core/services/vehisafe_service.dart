@@ -9,6 +9,7 @@ abstract class VehiSafeService {
   Stream<SensorSnapshot> get sensorStream;
   Stream<Map<String, dynamic>> get crashAlertStream; // Emits Map: { 'severityScore': double, 'severityLevel': String, 'sensorSnapshot': SensorSnapshot }
 
+  String get activeLocalIp;
   Future<void> simulateCrash(String severityLevel);
   Future<List<AlertEvent>> getPrepopulatedHistory();
 

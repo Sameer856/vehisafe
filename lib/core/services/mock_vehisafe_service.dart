@@ -20,6 +20,10 @@ class MockVehiSafeService implements VehiSafeService {
   
   bool _isConnected = false;
   bool _isConfigured;
+  String _activeLocalIp = '192.168.4.1'; // Default to hotspot IP
+  
+  @override
+  String get activeLocalIp => _activeLocalIp;
   
   String _currentMode = 'Monitoring';
   String _networkStatus = 'LTE Connected';
@@ -82,7 +86,7 @@ class MockVehiSafeService implements VehiSafeService {
         final client = HttpClient();
         client.connectionTimeout = const Duration(seconds: 1);
         
-        var requestUrl = 'http://192.168.100.100:8080/status';
+        var requestUrl = 'http://$_activeLocalIp:8080/status';
         var isCloudFallback = false;
         HttpClientRequest request;
         
@@ -217,14 +221,14 @@ class MockVehiSafeService implements VehiSafeService {
       client.connectionTimeout = const Duration(seconds: 3);
       
       // Hitting local simulate endpoint on Pi
-      final request = await client.getUrl(Uri.parse('http://192.168.100.100:8080/simulate?severity=$severityLevel'));
+      final request = await client.getUrl(Uri.parse('http://$_activeLocalIp:8080/simulate?severity=$severityLevel'));
       final response = await request.close();
       if (response.statusCode == 200) {
         final responseBody = await response.transform(utf8.decoder).join();
         debugPrint('Local Pi Response: $responseBody');
       }
     } catch (e) {
-      debugPrint('Local Pi unreachable at 192.168.100.100. Posting simulation trigger to cloud. Details: $e');
+      debugPrint('Local Pi unreachable at $_activeLocalIp. Posting simulation trigger to cloud. Details: $e');
       // Trigger simulation over the cloud by PUTting directly to Firebase RTDB for the device
       try {
         final client = HttpClient();
@@ -349,6 +353,25 @@ class MockVehiSafeService implements VehiSafeService {
     _isConnected = true;
     _networkStatus = 'Local WiFi';
     _currentMode = 'Configuration';
+    
+    // Probe local network to find active Pi IP (Wi-Fi hotspot vs USB Ethernet gadget)
+    final targetIps = ['192.168.4.1', '192.168.100.100'];
+    for (final ip in targetIps) {
+      try {
+        final client = HttpClient();
+        client.connectionTimeout = const Duration(seconds: 1);
+        final request = await client.getUrl(Uri.parse('http://$ip:8080/status'));
+        final response = await request.close();
+        if (response.statusCode == 200) {
+          _activeLocalIp = ip;
+          debugPrint('[VEHISAFE SERVICE] Found active Pi IP: $_activeLocalIp');
+          break;
+        }
+      } catch (e) {
+        debugPrint('[VEHISAFE SERVICE] Probe failed for Pi IP $ip: $e');
+      }
+    }
+    
     _publishStatus();
   }
 
@@ -404,37 +427,43 @@ class MockVehiSafeService implements VehiSafeService {
 
     // 2. Perform local HTTP POST to save configurations on ESP32/Pi (as fallback/local network control)
     bool localSuccess = false;
-    try {
-      final client = HttpClient();
-      client.connectionTimeout = const Duration(seconds: 3);
+    final targetIps = [_activeLocalIp, _activeLocalIp == '192.168.4.1' ? '192.168.100.100' : '192.168.4.1'];
+    
+    for (final ip in targetIps) {
+      try {
+        final client = HttpClient();
+        client.connectionTimeout = const Duration(seconds: 2);
 
-      final body = 'contact1=${Uri.encodeQueryComponent(c1)}'
-          '&contact2=${Uri.encodeQueryComponent(c2)}'
-          '&contact3=${Uri.encodeQueryComponent(c3)}'
-          '&vehicle=${Uri.encodeQueryComponent(vehicleConfig.type)}'
-          '&custom_msg=${Uri.encodeQueryComponent(customMessage)}';
+        final body = 'contact1=${Uri.encodeQueryComponent(c1)}'
+            '&contact2=${Uri.encodeQueryComponent(c2)}'
+            '&contact3=${Uri.encodeQueryComponent(c3)}'
+            '&vehicle=${Uri.encodeQueryComponent(vehicleConfig.type)}'
+            '&custom_msg=${Uri.encodeQueryComponent(customMessage)}';
 
-      final bodyBytes = utf8.encode(body);
+        final bodyBytes = utf8.encode(body);
 
-      onProgress(0.6);
-      final request = await client.postUrl(Uri.parse('http://192.168.100.100:8080/save'));
-      request.headers.contentType = ContentType('application', 'x-www-form-urlencoded', charset: 'utf-8');
-      request.contentLength = bodyBytes.length;
-      
-      onProgress(0.7);
-      request.add(bodyBytes);
+        onProgress(0.6);
+        final request = await client.postUrl(Uri.parse('http://$ip:8080/save'));
+        request.headers.contentType = ContentType('application', 'x-www-form-urlencoded', charset: 'utf-8');
+        request.contentLength = bodyBytes.length;
+        
+        onProgress(0.7);
+        request.add(bodyBytes);
 
-      onProgress(0.8);
-      final response = await request.close();
-      onProgress(0.9);
+        onProgress(0.8);
+        final response = await request.close();
+        onProgress(0.9);
 
-      if (response.statusCode == 200) {
-        final responseBody = await response.transform(utf8.decoder).join();
-        debugPrint('Pi Hardware Config Response: $responseBody');
-        localSuccess = true;
+        if (response.statusCode == 200) {
+          final responseBody = await response.transform(utf8.decoder).join();
+          debugPrint('Pi Hardware Config Response from $ip: $responseBody');
+          _activeLocalIp = ip; // Lock onto the working IP
+          localSuccess = true;
+          break;
+        }
+      } catch (e) {
+        debugPrint('Pi Hardware Local Config unreachable at $ip: $e');
       }
-    } catch (e) {
-      debugPrint('Pi Hardware Local Config unreachable: $e');
     }
 
     onProgress(1.0);

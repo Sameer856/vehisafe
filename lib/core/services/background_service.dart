@@ -60,7 +60,8 @@ void onStart(ServiceInstance service) async {
 
   Timer? pollingTimer;
   Timer? countdownTimer;
-
+  String activeLocalIp = '192.168.4.1'; // Default to hotspot IP
+  
   bool isAlertActive = false;
   int countdown = 10;
   String severityLevel = 'HIGH';
@@ -124,13 +125,24 @@ void onStart(ServiceInstance service) async {
         service.invoke('onAlertSending');
 
         // Hit local Pi simulation endpoint or fall back to Firebase Cloud Trigger
-        try {
-          final client = HttpClient();
-          client.connectionTimeout = const Duration(seconds: 3);
-          final request = await client.getUrl(Uri.parse('http://192.168.100.100:8080/simulate?severity=$severityLevel'));
-          await request.close();
-        } catch (e) {
-          debugPrint('[BACKGROUND SERVICE] Pi unreachable at 192.168.100.100: $e');
+        bool triggerSent = false;
+        final targetIps = [activeLocalIp, activeLocalIp == '192.168.4.1' ? '192.168.100.100' : '192.168.4.1'];
+        for (final ip in targetIps) {
+          try {
+            final client = HttpClient();
+            client.connectionTimeout = const Duration(seconds: 2);
+            final request = await client.getUrl(Uri.parse('http://$ip:8080/simulate?severity=$severityLevel'));
+            await request.close();
+            activeLocalIp = ip; // Update active IP
+            triggerSent = true;
+            debugPrint('[BACKGROUND SERVICE] Local trigger sent successfully to Pi at $ip');
+            break;
+          } catch (e) {
+            debugPrint('[BACKGROUND SERVICE] Pi local trigger failed at IP $ip: $e');
+          }
+        }
+        
+        if (!triggerSent) {
           // Post simulation trigger to Firebase RTDB for cloud alert fallback
           try {
             final client = HttpClient();
@@ -143,8 +155,9 @@ void onStart(ServiceInstance service) async {
             });
             request.add(utf8.encode(payload));
             await request.close();
-          } catch (fe) {
-            debugPrint('[BACKGROUND SERVICE] Firebase simulation trigger post failed: $fe');
+            debugPrint('[BACKGROUND SERVICE] Cloud simulation trigger posted successfully.');
+          } catch (e) {
+            debugPrint('[BACKGROUND SERVICE] Cloud simulation trigger failed: $e');
           }
           aiBonus = 1.5; // fallback
           severityScore = baseScore + aiBonus;
@@ -257,7 +270,7 @@ void onStart(ServiceInstance service) async {
       final client = HttpClient();
       client.connectionTimeout = const Duration(seconds: 1);
       
-      var requestUrl = 'http://192.168.100.100:8080/status';
+      var requestUrl = 'http://$activeLocalIp:8080/status';
       var isCloud = false;
       HttpClientRequest request;
       
@@ -266,10 +279,22 @@ void onStart(ServiceInstance service) async {
         final response = await request.close();
         if (response.statusCode != 200) throw Exception();
       } catch (e) {
-        // Fallback to Firebase
-        requestUrl = 'https://vehisafe-alert-default-rtdb.firebaseio.com/device_status/VH001.json';
-        request = await client.getUrl(Uri.parse(requestUrl));
-        isCloud = true;
+        // Try the alternative local IP before falling back to cloud
+        final altIp = activeLocalIp == '192.168.4.1' ? '192.168.100.100' : '192.168.4.1';
+        try {
+          request = await client.getUrl(Uri.parse('http://$altIp:8080/status'));
+          final response = await request.close();
+          if (response.statusCode == 200) {
+            activeLocalIp = altIp; // Update active local IP
+          } else {
+            throw Exception();
+          }
+        } catch (_) {
+          // Fallback to Firebase
+          requestUrl = 'https://vehisafe-alert-default-rtdb.firebaseio.com/device_status/VH001.json';
+          request = await client.getUrl(Uri.parse(requestUrl));
+          isCloud = true;
+        }
       }
       
       final response = await request.close();

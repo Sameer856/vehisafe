@@ -269,7 +269,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Could not reach the VehiSafe device at 192.168.100.100.',
+                  'Could not reach the VehiSafe device. Please verify your connection.',
                   style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
                 ),
                 const SizedBox(height: 12),
@@ -1023,7 +1023,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   children: [
                     // Pure-Dart MJPEG parser for smooth streaming on mobile platforms
                     MjpegStreamPlayer(
-                      url: 'http://192.168.100.100:8080/live_feed',
+                      url: 'http://${ref.read(vehiSafeServiceProvider).activeLocalIp}:8080/live_feed',
                       placeholder: Container(
                         color: Colors.black,
                         child: Stack(
