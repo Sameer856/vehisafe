@@ -7,8 +7,8 @@ class VehicleConfig {
     required this.year,
   });
 
-  // Determines charging port: pre-2020 = 12V, 2020+ = USB-C
-  String get chargingPort => year < 2020 ? '12V' : 'USB-C';
+  // Determines charging port: always 12V
+  String get chargingPort => '12V';
 
   // Two-wheeler disables barometer condition in detection logic
   bool get disableBarometer => type == 'Two-Wheeler';

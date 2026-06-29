@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/colors.dart';
@@ -267,7 +269,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Could not reach the VehiSafe device at 192.168.4.1.',
+                  'Could not reach the VehiSafe device at 192.168.100.100.',
                   style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
                 ),
                 const SizedBox(height: 12),
@@ -278,7 +280,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 const SizedBox(height: 8),
                 const Text(
                   '1. Open your phone\'s System WiFi Settings.\n'
-                  '2. Verify you are connected to the "VehiSafe_Setup" hotspot.\n'
+                  '2. Verify you are connected to the "VehiSafe" hotspot.\n'
                   '3. Turn off cellular mobile data temporarily (sometimes the OS redirects local requests to LTE).\n'
                   '4. Close this dialog and click the device name to try again.',
                   style: TextStyle(color: AppColors.darkTextSecondary, fontSize: 13, height: 1.45),
@@ -327,6 +329,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             _buildPinPage(),
             _buildBiometricPage(),
             _buildPairingPage(),
+            _buildCameraAlignmentPage(),
             _buildUploadSuccessPage(),
           ],
         ),
@@ -338,57 +341,69 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   // 1. Welcome Page
   Widget _buildWelcomePage() {
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Spacer(),
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: AppColors.brandPrimary.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-              border: Border.all(color: AppColors.brandPrimary.withValues(alpha: 0.3), width: 2),
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const SizedBox(height: 48),
+            Container(
+              width: 140,
+              height: 140,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 16,
+                    offset: const Offset(0, 8),
+                  )
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: Image.asset(
+                  'asset/VEHISAFE.jpg',
+                  fit: BoxFit.cover,
+                ),
+              ),
             ),
-            child: const Icon(
-              Icons.shield_outlined,
-              size: 100,
-              color: AppColors.brandPrimary,
+            const SizedBox(height: 32),
+            const Text(
+              'VEHISAFE',
+              style: TextStyle(
+                fontSize: 36,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 2,
+                color: AppColors.darkTextPrimary,
+                fontFamily: 'NegritaPro',
+              ),
             ),
-          ),
-          const SizedBox(height: 32),
-          const Text(
-            'VEHISAFE',
-            style: TextStyle(
-              fontSize: 36,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 2,
-              color: Colors.white,
+            const SizedBox(height: 12),
+            const Text(
+              'Smart Vehicle Crash Detection & Telemetry',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16,
+                color: AppColors.darkTextSecondary,
+              ),
             ),
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            'Raspberry Pi + Lapcare Modem Safety System',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 16,
-              color: AppColors.darkTextSecondary,
+            const SizedBox(height: 64),
+            ElevatedButton(
+              onPressed: _nextPage,
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size.fromHeight(56),
+                backgroundColor: AppColors.brandPrimary,
+                foregroundColor: Colors.black,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: const Text('Get Started', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             ),
-          ),
-          const Spacer(),
-          ElevatedButton(
-            onPressed: _nextPage,
-            style: ElevatedButton.styleFrom(
-              minimumSize: const Size.fromHeight(56),
-              backgroundColor: AppColors.brandPrimary,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            child: const Text('Get Started', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          ),
-          const SizedBox(height: 24),
-        ],
+            const SizedBox(height: 24),
+          ],
+        ),
       ),
     );
   }
@@ -407,11 +422,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          IconButton(onPressed: _prevPage, icon: const Icon(Icons.arrow_back, color: Colors.white)),
+          IconButton(onPressed: _prevPage, icon: const Icon(Icons.arrow_back, color: AppColors.darkTextPrimary)),
           const SizedBox(height: 20),
           const Text(
             'Select Vehicle Type',
-            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
+            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.darkTextPrimary),
           ),
           const SizedBox(height: 10),
           const Text(
@@ -448,14 +463,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(icon, size: 48, color: isSelected ? AppColors.brandPrimary : Colors.white),
+                        Icon(icon, size: 48, color: isSelected ? Colors.black : AppColors.darkTextSecondary),
                         const SizedBox(height: 12),
                         Text(
                           name,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: isSelected ? AppColors.brandPrimary : Colors.white,
+                            color: isSelected ? Colors.black : AppColors.darkTextSecondary,
                           ),
                         ),
                       ],
@@ -472,130 +487,137 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   // 3. Vehicle Year Selection Page
   Widget _buildVehicleYearPage() {
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          IconButton(onPressed: _prevPage, icon: const Icon(Icons.arrow_back, color: Colors.white)),
-          const SizedBox(height: 20),
-          const Text(
-            'Model Year',
-            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
-          ),
-          const SizedBox(height: 10),
-          const Text(
-            'Vehicle year helps us determine the appropriate connection adapter port (12V accessory socket or USB-C).',
-            style: TextStyle(fontSize: 14, color: AppColors.darkTextSecondary),
-          ),
-          const Spacer(),
-          Center(
-            child: Column(
-              children: [
-                Text(
-                  '$_selectedVehicleYear',
-                  style: const TextStyle(fontSize: 64, fontWeight: FontWeight.w900, color: AppColors.brandPrimary),
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    IconButton(
-                      onPressed: () {
-                        setState(() {
-                          if (_selectedVehicleYear > 1990) _selectedVehicleYear--;
-                        });
-                      },
-                      icon: const Icon(Icons.remove_circle_outline, size: 48, color: Colors.white),
-                    ),
-                    const SizedBox(width: 40),
-                    IconButton(
-                      onPressed: () {
-                        setState(() {
-                          if (_selectedVehicleYear < DateTime.now().year + 1) _selectedVehicleYear++;
-                        });
-                      },
-                      icon: const Icon(Icons.add_circle_outline, size: 48, color: Colors.white),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 40),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: AppColors.darkSurface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.darkDivider),
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            IconButton(onPressed: _prevPage, icon: const Icon(Icons.arrow_back, color: AppColors.darkTextPrimary)),
+            const SizedBox(height: 20),
+            const Text(
+              'Model Year',
+              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.darkTextPrimary),
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'Vehicle year helps us determine configuration parameters.',
+              style: TextStyle(fontSize: 14, color: AppColors.darkTextSecondary),
+            ),
+            const SizedBox(height: 32),
+            Center(
+              child: Column(
+                children: [
+                  Text(
+                    '$_selectedVehicleYear',
+                    style: const TextStyle(fontSize: 64, fontWeight: FontWeight.w900, color: AppColors.brandPrimary),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.power_outlined, color: AppColors.brandPrimary),
-                      const SizedBox(width: 12),
-                      Text(
-                        'Estimated Adapter: ${_selectedVehicleYear < 2020 ? '12V Accessory Plug' : 'USB-C Direct'}',
-                        style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                      IconButton(
+                        onPressed: () {
+                          setState(() {
+                            if (_selectedVehicleYear > 1990) _selectedVehicleYear--;
+                          });
+                        },
+                        icon: const Icon(Icons.remove_circle_outline, size: 48, color: AppColors.darkTextPrimary),
+                      ),
+                      const SizedBox(width: 40),
+                      IconButton(
+                        onPressed: () {
+                          setState(() {
+                            if (_selectedVehicleYear < DateTime.now().year + 1) _selectedVehicleYear++;
+                          });
+                        },
+                        icon: const Icon(Icons.add_circle_outline, size: 48, color: AppColors.darkTextPrimary),
                       ),
                     ],
                   ),
-                ),
-              ],
+                  const SizedBox(height: 32),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: AppColors.darkSurface,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.darkDivider),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.power_outlined, color: AppColors.brandPrimary),
+                        SizedBox(width: 12),
+                        Flexible(
+                          child: Text(
+                            'Adapter: 12V Accessory Socket',
+                            style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.darkTextPrimary),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const Spacer(),
-          ElevatedButton(
-            onPressed: _saveVehicleInfo,
-            style: ElevatedButton.styleFrom(
-              minimumSize: const Size.fromHeight(56),
-              backgroundColor: AppColors.brandPrimary,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            const SizedBox(height: 32),
+            ElevatedButton(
+              onPressed: _saveVehicleInfo,
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size.fromHeight(56),
+                backgroundColor: AppColors.brandPrimary,
+                foregroundColor: Colors.black,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: const Text('Continue', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             ),
-            child: const Text('Continue', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          ),
-          const SizedBox(height: 24),
-        ],
+            const SizedBox(height: 24),
+          ],
+        ),
       ),
     );
   }
 
   // 4. Emergency Contacts Setup Page
   Widget _buildContactsPage() {
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          IconButton(onPressed: _prevPage, icon: const Icon(Icons.arrow_back, color: Colors.white)),
-          const SizedBox(height: 20),
-          const Text(
-            'Emergency Contacts',
-            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
-          ),
-          const SizedBox(height: 10),
-          const Text(
-            'Add 1 to 3 contacts who will receive emergency coordinates text dispatches in case of an accident.',
-            style: TextStyle(fontSize: 14, color: AppColors.darkTextSecondary),
-          ),
-          const SizedBox(height: 20),
-          if (_tempContacts.isEmpty)
-            Expanded(
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.contact_phone_outlined, size: 64, color: AppColors.brandPrimary.withValues(alpha: 0.5)),
-                    const SizedBox(height: 16),
-                    const Text('No contacts added yet', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-                    const SizedBox(height: 8),
-                    const Text('You must add at least 1 contact to proceed', style: TextStyle(color: AppColors.darkTextSecondary, fontSize: 12)),
-                  ],
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            IconButton(onPressed: _prevPage, icon: const Icon(Icons.arrow_back, color: AppColors.darkTextPrimary)),
+            const SizedBox(height: 20),
+            const Text(
+              'Emergency Contacts',
+              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.darkTextPrimary),
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'Add 1 to 3 contacts who will receive emergency coordinates text dispatches in case of an accident.',
+              style: TextStyle(fontSize: 14, color: AppColors.darkTextSecondary),
+            ),
+            const SizedBox(height: 20),
+            if (_tempContacts.isEmpty)
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 40.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.contact_phone_outlined, size: 64, color: AppColors.brandPrimary.withValues(alpha: 0.5)),
+                      const SizedBox(height: 16),
+                      const Text('No contacts added yet', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.darkTextPrimary)),
+                      const SizedBox(height: 8),
+                      const Text('You must add at least 1 contact to proceed', style: TextStyle(color: AppColors.darkTextSecondary, fontSize: 12)),
+                    ],
+                  ),
                 ),
-              ),
-            )
-          else
-            Expanded(
-              child: ListView.builder(
+              )
+            else
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
                 itemCount: _tempContacts.length,
                 itemBuilder: (context, index) {
                   final contact = _tempContacts[index];
@@ -605,9 +627,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     child: ListTile(
                       leading: const CircleAvatar(
                         backgroundColor: AppColors.brandPrimary,
-                        child: Icon(Icons.person, color: Colors.white),
+                        child: Icon(Icons.person, color: Colors.black),
                       ),
-                      title: Text(contact.name, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                      title: Text(contact.name, style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.darkTextPrimary)),
                       subtitle: Text(contact.phoneNumber, style: const TextStyle(color: AppColors.darkTextSecondary)),
                       trailing: IconButton(
                         icon: const Icon(Icons.delete_outline, color: AppColors.severityHigh),
@@ -617,31 +639,32 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   );
                 },
               ),
-            ),
-          if (_tempContacts.length < 3)
-            OutlinedButton.icon(
-              onPressed: _showAddContactDialog,
-              icon: const Icon(Icons.add, color: AppColors.brandPrimary),
-              label: const Text('Add Emergency Contact', style: TextStyle(color: AppColors.brandPrimary)),
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size.fromHeight(50),
-                side: const BorderSide(color: AppColors.brandPrimary),
+            const SizedBox(height: 16),
+            if (_tempContacts.length < 3)
+              OutlinedButton.icon(
+                onPressed: _showAddContactDialog,
+                icon: const Icon(Icons.add, color: AppColors.brandPrimary),
+                label: const Text('Add Emergency Contact', style: TextStyle(color: AppColors.brandPrimary)),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(50),
+                  side: const BorderSide(color: AppColors.brandPrimary),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _tempContacts.isNotEmpty ? _saveContacts : null,
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size.fromHeight(56),
+                backgroundColor: AppColors.brandPrimary,
+                foregroundColor: Colors.black,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
+              child: const Text('Continue', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: _tempContacts.isNotEmpty ? _saveContacts : null,
-            style: ElevatedButton.styleFrom(
-              minimumSize: const Size.fromHeight(56),
-              backgroundColor: AppColors.brandPrimary,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            child: const Text('Continue', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          ),
-          const SizedBox(height: 24),
-        ],
+            const SizedBox(height: 24),
+          ],
+        ),
       ),
     );
   }
@@ -651,13 +674,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.darkSurface,
-        title: const Text('Add Contact', style: TextStyle(color: Colors.white)),
+        title: const Text('Add Contact', style: TextStyle(color: AppColors.darkTextPrimary)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: _contactNameController,
-              style: const TextStyle(color: Colors.white),
+              style: const TextStyle(color: AppColors.darkTextPrimary),
               decoration: const InputDecoration(
                 labelText: 'Full Name',
                 labelStyle: TextStyle(color: AppColors.darkTextSecondary),
@@ -668,7 +691,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             TextField(
               controller: _contactPhoneController,
               keyboardType: TextInputType.phone,
-              style: const TextStyle(color: Colors.white),
+              style: const TextStyle(color: AppColors.darkTextPrimary),
               decoration: const InputDecoration(
                 labelText: 'Phone Number',
                 labelStyle: TextStyle(color: AppColors.darkTextSecondary),
@@ -695,200 +718,206 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   Widget _buildPinPage() {
     final currentPinText = _isConfirmingPin ? _confirmPinCode : _pinCode;
 
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              IconButton(
-                onPressed: () {
-                  if (_isConfirmingPin) {
-                    setState(() {
-                      _isConfirmingPin = false;
-                      _confirmPinCode = '';
-                    });
-                  } else {
-                    _prevPage();
-                  }
-                },
-                icon: const Icon(Icons.arrow_back, color: Colors.white),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Text(
-            _isConfirmingPin ? 'Confirm Security PIN' : 'Create Security PIN',
-            style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            _isConfirmingPin
-                ? 'Enter the 4-digit PIN code again to confirm.'
-                : 'This PIN is used to cancel accidental crash dispatches.',
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 14, color: AppColors.darkTextSecondary),
-          ),
-          const Spacer(),
-          if (_pinError != null)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 16.0),
-              child: Text(
-                _pinError!,
-                style: const TextStyle(color: AppColors.severityHigh, fontWeight: FontWeight.bold),
-              ),
-            ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(4, (index) {
-              final active = currentPinText.length > index;
-              return Container(
-                width: 24,
-                height: 24,
-                margin: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: active ? AppColors.brandPrimary : Colors.transparent,
-                  border: Border.all(
-                    color: active ? AppColors.brandPrimary : AppColors.darkDivider,
-                    width: 2,
-                  ),
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                IconButton(
+                  onPressed: () {
+                    if (_isConfirmingPin) {
+                      setState(() {
+                        _isConfirmingPin = false;
+                        _confirmPinCode = '';
+                      });
+                    } else {
+                      _prevPage();
+                    }
+                  },
+                  icon: const Icon(Icons.arrow_back, color: AppColors.darkTextPrimary),
                 ),
-              );
-            }),
-          ),
-          const Spacer(),
-          CustomPinPad(
-            onKeyPressed: _handlePinKey,
-            onDeletePressed: _handlePinDelete,
-            showBiometric: false,
-          ),
-          const SizedBox(height: 24),
-        ],
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              _isConfirmingPin ? 'Confirm Security PIN' : 'Create Security PIN',
+              style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.darkTextPrimary),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              _isConfirmingPin
+                  ? 'Enter the 4-digit PIN code again to confirm.'
+                  : 'This PIN is used to cancel accidental crash dispatches.',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 14, color: AppColors.darkTextSecondary),
+            ),
+            const SizedBox(height: 32),
+            if (_pinError != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16.0),
+                child: Text(
+                  _pinError!,
+                  style: const TextStyle(color: AppColors.severityHigh, fontWeight: FontWeight.bold),
+                ),
+              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(4, (index) {
+                final active = currentPinText.length > index;
+                return Container(
+                  width: 24,
+                  height: 24,
+                  margin: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: active ? AppColors.brandPrimary : Colors.transparent,
+                    border: Border.all(
+                      color: active ? AppColors.brandPrimary : AppColors.darkDivider,
+                      width: 2,
+                    ),
+                  ),
+                );
+              }),
+            ),
+            const SizedBox(height: 32),
+            CustomPinPad(
+              onKeyPressed: _handlePinKey,
+              onDeletePressed: _handlePinDelete,
+              showBiometric: false,
+            ),
+            const SizedBox(height: 24),
+          ],
+        ),
       ),
     );
   }
 
   // 6. Biometrics Prompt Page
   Widget _buildBiometricPage() {
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              IconButton(onPressed: _prevPage, icon: const Icon(Icons.arrow_back, color: Colors.white)),
-            ],
-          ),
-          const Spacer(),
-          const Icon(Icons.fingerprint, size: 100, color: AppColors.brandPrimary),
-          const SizedBox(height: 32),
-          const Text(
-            'Enable Biometric Auth',
-            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            'Use your fingerprint or face recognition for quick alert cancellations during emergency countdowns.',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 14, color: AppColors.darkTextSecondary),
-          ),
-          const Spacer(),
-          if (_biometricsSupported) ...[
-            ElevatedButton(
-              onPressed: () => _saveBiometricsChoice(true),
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size.fromHeight(56),
-                backgroundColor: AppColors.brandPrimary,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              child: const Text('Enable Biometric Authentication'),
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                IconButton(onPressed: _prevPage, icon: const Icon(Icons.arrow_back, color: AppColors.darkTextPrimary)),
+              ],
             ),
-            const SizedBox(height: 16),
-            TextButton(
-              onPressed: () => _saveBiometricsChoice(false),
-              child: const Text('Skip for Now', style: TextStyle(color: AppColors.darkTextSecondary)),
-            ),
-          ] else ...[
+            const SizedBox(height: 32),
+            const Icon(Icons.fingerprint, size: 100, color: AppColors.brandPrimary),
+            const SizedBox(height: 32),
             const Text(
-              'Biometrics not supported or setup on this device.',
-              style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold),
+              'Enable Biometric Auth',
+              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.darkTextPrimary),
             ),
-            const Spacer(),
-            ElevatedButton(
-              onPressed: () => _saveBiometricsChoice(false),
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size.fromHeight(56),
-                backgroundColor: AppColors.brandPrimary,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            const SizedBox(height: 12),
+            const Text(
+              'Use your fingerprint or face recognition for quick alert cancellations during emergency countdowns.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, color: AppColors.darkTextSecondary),
+            ),
+            const SizedBox(height: 48),
+            if (_biometricsSupported) ...[
+              ElevatedButton(
+                onPressed: () => _saveBiometricsChoice(true),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(56),
+                  backgroundColor: AppColors.brandPrimary,
+                  foregroundColor: Colors.black,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: const Text('Enable Biometric Authentication'),
               ),
-              child: const Text('Continue'),
-            ),
+              const SizedBox(height: 16),
+              TextButton(
+                onPressed: () => _saveBiometricsChoice(false),
+                child: const Text('Skip for Now', style: TextStyle(color: AppColors.darkTextSecondary)),
+              ),
+            ] else ...[
+              const Text(
+                'Biometrics not supported or setup on this device.',
+                style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 32),
+              ElevatedButton(
+                onPressed: () => _saveBiometricsChoice(false),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(56),
+                  backgroundColor: AppColors.brandPrimary,
+                  foregroundColor: Colors.black,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: const Text('Continue'),
+              ),
+            ],
+            const SizedBox(height: 24),
           ],
-          const SizedBox(height: 24),
-        ],
+        ),
       ),
     );
   }
 
   // 7. Pairing Page (Local WiFi Scanner)
   Widget _buildPairingPage() {
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              IconButton(onPressed: _prevPage, icon: const Icon(Icons.arrow_back, color: Colors.white)),
-            ],
-          ),
-          const Spacer(),
-          if (!_isScanning && _scannedDevices.isEmpty && !_isUploadingConfig) ...[
-            Icon(Icons.wifi_find_outlined, size: 100, color: AppColors.brandPrimary.withValues(alpha: 0.6)),
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                IconButton(onPressed: _prevPage, icon: const Icon(Icons.arrow_back, color: AppColors.darkTextPrimary)),
+              ],
+            ),
             const SizedBox(height: 32),
-            const Text('Local WiFi Pairing', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
-            const SizedBox(height: 12),
-            const Text(
-              'Connect directly to the VehiSafe hotspot local WiFi network to upload configuration variables. Internet connection is not required.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, color: AppColors.darkTextSecondary),
-            ),
-            const Spacer(),
-            ElevatedButton(
-              onPressed: _startDeviceScanning,
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size.fromHeight(56),
-                backgroundColor: AppColors.brandPrimary,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            if (!_isScanning && _scannedDevices.isEmpty && !_isUploadingConfig) ...[
+              Icon(Icons.wifi_find_outlined, size: 100, color: AppColors.brandPrimary.withValues(alpha: 0.6)),
+              const SizedBox(height: 32),
+              const Text('Local WiFi Pairing', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.darkTextPrimary)),
+              const SizedBox(height: 12),
+              const Text(
+                'Connect directly to the VehiSafe hotspot local WiFi network to upload configuration variables. Internet connection is not required.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 14, color: AppColors.darkTextSecondary),
               ),
-              child: const Text('Search for VehiSafe Devices', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            ),
-          ] else if (_isScanning) ...[
-            const RadarScanner(),
-            const SizedBox(height: 48),
-            const Text(
-              'Scanning Local WiFi Band...',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'Listening for Raspberry Pi / Lapcare Wi-Fi signals',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.darkTextSecondary),
-            ),
-            const Spacer(),
-          ] else if (_scannedDevices.isNotEmpty && !_isUploadingConfig) ...[
-            const Icon(Icons.devices_other, size: 64, color: AppColors.brandPrimary),
-            const SizedBox(height: 16),
-            const Text('VehiSafe Devices Found', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
-            const SizedBox(height: 8),
-            const Text('Select your hardware device hotspot to configure:', style: TextStyle(color: AppColors.darkTextSecondary)),
-            const SizedBox(height: 24),
-            Expanded(
-              child: ListView.builder(
+              const SizedBox(height: 48),
+              ElevatedButton(
+                onPressed: _startDeviceScanning,
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(56),
+                  backgroundColor: AppColors.brandPrimary,
+                  foregroundColor: Colors.black,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: const Text('Search for VehiSafe Devices', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              ),
+            ] else if (_isScanning) ...[
+              const RadarScanner(),
+              const SizedBox(height: 48),
+              const Text(
+                'Scanning Local WiFi Band...',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.darkTextPrimary),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Listening for VehiSafe / Lapcare Wi-Fi signals',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: AppColors.darkTextSecondary),
+              ),
+              const SizedBox(height: 48),
+            ] else if (_scannedDevices.isNotEmpty && !_isUploadingConfig) ...[
+              const Icon(Icons.devices_other, size: 64, color: AppColors.brandPrimary),
+              const SizedBox(height: 16),
+              const Text('VehiSafe Devices Found', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.darkTextPrimary)),
+              const SizedBox(height: 8),
+              const Text('Select your hardware device hotspot to configure:', style: TextStyle(color: AppColors.darkTextSecondary)),
+              const SizedBox(height: 24),
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
                 itemCount: _scannedDevices.length,
                 itemBuilder: (context, index) {
                   final dev = _scannedDevices[index];
@@ -901,117 +930,269 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     margin: const EdgeInsets.only(bottom: 12),
                     child: ListTile(
                       leading: const Icon(Icons.wifi, color: AppColors.brandPrimary),
-                      title: Text(dev, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                      title: Text(dev, style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.darkTextPrimary)),
                       subtitle: const Text('Local WiFi hotspot active', style: TextStyle(color: AppColors.darkTextSecondary, fontSize: 12)),
-                      trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.white),
+                      trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.darkTextPrimary),
                       onTap: () => _connectToSelectedDevice(dev),
                     ),
                   );
                 },
               ),
-            ),
-            TextButton(
-              onPressed: _startDeviceScanning,
-              child: const Text('Scan Again', style: TextStyle(color: AppColors.brandPrimary)),
-            ),
-          ] else if (_isUploadingConfig) ...[
-            const SizedBox(
-              width: 100,
-              height: 100,
-              child: CircularProgressIndicator(
-                strokeWidth: 6,
-                valueColor: AlwaysStoppedAnimation(AppColors.brandPrimary),
+              TextButton(
+                onPressed: _startDeviceScanning,
+                child: const Text('Scan Again', style: TextStyle(color: AppColors.brandPrimary)),
               ),
-            ),
-            const SizedBox(height: 48),
-            Text(
-              'Uploading Configuration: ${(_uploadProgress * 100).toInt()}%',
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
-            ),
-            const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 48.0),
-              child: LinearProgressIndicator(
-                value: _uploadProgress,
-                backgroundColor: AppColors.darkDivider,
-                valueColor: const AlwaysStoppedAnimation(AppColors.brandPrimary),
+            ] else if (_isUploadingConfig) ...[
+              const SizedBox(
+                width: 100,
+                height: 100,
+                child: CircularProgressIndicator(
+                  strokeWidth: 6,
+                  valueColor: AlwaysStoppedAnimation(AppColors.brandPrimary),
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Packaging emergency contacts, vehicle year thresholds, PIN signature, and local WiFi network credentials...',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.darkTextSecondary, fontSize: 13),
-            ),
-            const Spacer(),
+              const SizedBox(height: 48),
+              Text(
+                'Uploading Configuration: ${(_uploadProgress * 100).toInt()}%',
+                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.darkTextPrimary),
+              ),
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 48.0),
+                child: LinearProgressIndicator(
+                  value: _uploadProgress,
+                  backgroundColor: AppColors.darkDivider,
+                  valueColor: const AlwaysStoppedAnimation(AppColors.brandPrimary),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Packaging emergency contacts, vehicle year thresholds, PIN signature, and local WiFi network credentials...',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: AppColors.darkTextSecondary, fontSize: 13),
+              ),
+              const SizedBox(height: 48),
+            ],
+            const SizedBox(height: 24),
           ],
-          const SizedBox(height: 24),
-        ],
+        ),
       ),
     );
   }
 
-  // 8. Upload Success Screen
-  Widget _buildUploadSuccessPage() {
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        children: [
-          const Spacer(),
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: const BoxDecoration(color: AppColors.statusConnected, shape: BoxShape.circle),
-            child: const Icon(Icons.check, size: 64, color: Colors.white),
-          ),
-          const SizedBox(height: 32),
-          const Text('Configuration Uploaded!', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.green)),
-          const SizedBox(height: 12),
-          const Text(
-            'Vehicle parameters and contact rosters have been saved locally to the Raspberry Pi hardware device. Switching device to working mode.',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 14, color: AppColors.darkTextSecondary),
-          ),
-          const SizedBox(height: 32),
-          
-          // Setup Summary Card
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.darkSurface,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.darkDivider),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+  // 8. Camera Alignment Page
+  Widget _buildCameraAlignmentPage() {
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          children: [
+            Row(
               children: [
-                const Text('UPLOADED SCHEMA SUMMARY:', style: TextStyle(color: AppColors.brandPrimary, fontWeight: FontWeight.bold, fontSize: 11)),
-                const SizedBox(height: 12),
-                _buildSummaryRow('Device Paired', _selectedDeviceName ?? 'VehiSafe-Pi-System'),
-                const Divider(color: AppColors.darkDivider),
-                _buildSummaryRow('Vehicle Details', '$_selectedVehicleType ($_selectedVehicleYear)'),
-                const Divider(color: AppColors.darkDivider),
-                _buildSummaryRow('Emergency Contacts', '${_tempContacts.length} upload(s)'),
-                const Divider(color: AppColors.darkDivider),
-                _buildSummaryRow('Biometric Bypass', _biometricsEnabled ? 'Enabled' : 'Disabled'),
+                IconButton(
+                  onPressed: _prevPage,
+                  icon: const Icon(Icons.arrow_back, color: AppColors.darkTextPrimary),
+                ),
               ],
             ),
-          ),
-          
-          const Spacer(),
-          ElevatedButton(
-            onPressed: () {
-              _completeOnboarding();
-            },
-            style: ElevatedButton.styleFrom(
-              minimumSize: const Size.fromHeight(56),
-              backgroundColor: AppColors.brandPrimary,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            const SizedBox(height: 10),
+            const Text(
+              'Camera Alignment',
+              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.darkTextPrimary),
             ),
-            child: const Text('Finish Setup & Enter Panel', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          ),
-          const SizedBox(height: 24),
-        ],
+            const SizedBox(height: 10),
+            const Text(
+              'Mount your VehiSafe device on your windshield or dashboard. Align the camera feed so the road ahead is clearly visible.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, color: AppColors.darkTextSecondary),
+            ),
+            const SizedBox(height: 24),
+            
+            // Camera Stream Box with Overlay
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Container(
+                height: 240,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: AppColors.darkSurface,
+                  border: Border.all(color: AppColors.brandPrimary, width: 2),
+                ),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    // Pure-Dart MJPEG parser for smooth streaming on mobile platforms
+                    MjpegStreamPlayer(
+                      url: 'http://192.168.100.100:8080/live_feed',
+                      placeholder: Container(
+                        color: Colors.black,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            // Grid background lines
+                            Positioned.fill(
+                              child: Opacity(
+                                opacity: 0.15,
+                                child: GridPaper(
+                                  color: Colors.white,
+                                  divisions: 4,
+                                  subdivisions: 1,
+                                  interval: 60,
+                                ),
+                              ),
+                            ),
+                            Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.videocam_off_outlined, size: 48, color: Colors.grey.shade600),
+                                const SizedBox(height: 12),
+                                const Text(
+                                  'Live Feed Unreachable',
+                                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                ),
+                                const SizedBox(height: 4),
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 24.0),
+                                  child: Text(
+                                    'Showing alignment template guidelines. Verify Wi-Fi hotspot connection to see real-time view.',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(color: AppColors.darkTextSecondary, fontSize: 11),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    
+                    // Overlay grid / Horizon Line
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      child: Container(
+                        height: 2,
+                        color: Colors.greenAccent.withValues(alpha: 0.8),
+                      ),
+                    ),
+                    Positioned(
+                      top: 10,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.6),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Text(
+                          'HORIZON LINE',
+                          style: TextStyle(color: Colors.greenAccent, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1),
+                        ),
+                      ),
+                    ),
+                    
+                    // Center Reticle
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.greenAccent.withValues(alpha: 0.5), width: 2, style: BorderStyle.solid),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: const BoxDecoration(
+                        color: Colors.greenAccent,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            
+            const SizedBox(height: 32),
+            ElevatedButton(
+              onPressed: _nextPage,
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size.fromHeight(56),
+                backgroundColor: AppColors.brandPrimary,
+                foregroundColor: Colors.black,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: const Text('Confirm Alignment & Finish', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            ),
+            const SizedBox(height: 24),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // 9. Upload Success Screen
+  Widget _buildUploadSuccessPage() {
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          children: [
+            const SizedBox(height: 48),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: const BoxDecoration(color: AppColors.statusConnected, shape: BoxShape.circle),
+              child: const Icon(Icons.check, size: 64, color: Colors.white),
+            ),
+            const SizedBox(height: 32),
+            const Text('Configuration Uploaded!', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.green)),
+            const SizedBox(height: 12),
+            const Text(
+              'Vehicle parameters and contact rosters have been saved locally to the VehiSafe device. Switching device to working mode.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, color: AppColors.darkTextSecondary),
+            ),
+            const SizedBox(height: 32),
+            
+            // Setup Summary Card
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.darkSurface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.darkDivider),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('UPLOADED SCHEMA SUMMARY:', style: TextStyle(color: AppColors.brandPrimary, fontWeight: FontWeight.bold, fontSize: 11)),
+                  const SizedBox(height: 12),
+                  _buildSummaryRow('Device Paired', _selectedDeviceName ?? 'VehiSafe'),
+                  const Divider(color: AppColors.darkDivider),
+                  _buildSummaryRow('Vehicle Details', '$_selectedVehicleType ($_selectedVehicleYear)'),
+                  const Divider(color: AppColors.darkDivider),
+                  _buildSummaryRow('Emergency Contacts', '${_tempContacts.length} upload(s)'),
+                  const Divider(color: AppColors.darkDivider),
+                  _buildSummaryRow('Biometric Bypass', _biometricsEnabled ? 'Enabled' : 'Disabled'),
+                ],
+              ),
+            ),
+            
+            const SizedBox(height: 48),
+            ElevatedButton(
+              onPressed: () {
+                _completeOnboarding();
+              },
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size.fromHeight(56),
+                backgroundColor: AppColors.brandPrimary,
+                foregroundColor: Colors.black,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: const Text('Finish Setup & Enter Panel', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            ),
+            const SizedBox(height: 24),
+          ],
+        ),
       ),
     );
   }
@@ -1021,7 +1202,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label, style: const TextStyle(color: Colors.grey, fontSize: 13)),
-        Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+        Text(value, style: const TextStyle(color: AppColors.darkTextPrimary, fontWeight: FontWeight.bold, fontSize: 13)),
       ],
     );
   }
@@ -1092,6 +1273,148 @@ class _RadarScannerState extends State<RadarScanner> with SingleTickerProviderSt
           ],
         );
       },
+    );
+  }
+}
+
+// Custom Pure-Dart MJPEG Stream Player for Cross-Platform Compatibility
+class MjpegStreamPlayer extends StatefulWidget {
+  final String url;
+  final Widget placeholder;
+
+  const MjpegStreamPlayer({
+    super.key,
+    required this.url,
+    required this.placeholder,
+  });
+
+  @override
+  State<MjpegStreamPlayer> createState() => _MjpegStreamPlayerState();
+}
+
+class _MjpegStreamPlayerState extends State<MjpegStreamPlayer> {
+  Uint8List? _frameBytes;
+  StreamSubscription? _subscription;
+  HttpClient? _client;
+
+  @override
+  void initState() {
+    super.initState();
+    _startStream();
+  }
+
+  @override
+  void dispose() {
+    _stopStream();
+    super.dispose();
+  }
+
+  void _stopStream() {
+    _subscription?.cancel();
+    _client?.close(force: true);
+  }
+
+  void _startStream() async {
+    _client = HttpClient();
+    _client!.connectionTimeout = const Duration(seconds: 5);
+
+    try {
+      final request = await _client!.getUrl(Uri.parse(widget.url));
+      final response = await request.close();
+
+      if (response.statusCode != 200) {
+        throw Exception('Stream returned status ${response.statusCode}');
+      }
+
+      // MJPEG parser variables
+      List<int> buffer = [];
+      const List<int> jpegStart = [0xFF, 0xD8];
+      const List<int> jpegEnd = [0xFF, 0xD9];
+
+      _subscription = response.listen(
+        (data) {
+          buffer.addAll(data);
+
+          // Find JPEG start and end inside buffer
+          while (buffer.length > 4) {
+            int startIndex = -1;
+            for (int i = 0; i < buffer.length - 1; i++) {
+              if (buffer[i] == jpegStart[0] && buffer[i + 1] == jpegStart[1]) {
+                startIndex = i;
+                break;
+              }
+            }
+
+            if (startIndex == -1) {
+              // No start found, check if last byte is 0xFF to preserve it, otherwise clear buffer
+              if (buffer.isNotEmpty && buffer.last == 0xFF) {
+                buffer = [0xFF];
+              } else {
+                buffer.clear();
+              }
+              break;
+            }
+
+            // Find end marker starting after the start index
+            int endIndex = -1;
+            for (int i = startIndex + 2; i < buffer.length - 1; i++) {
+              if (buffer[i] == jpegEnd[0] && buffer[i + 1] == jpegEnd[1]) {
+                endIndex = i + 2; // Include the 0xD9 byte
+                break;
+              }
+            }
+
+            if (endIndex == -1) {
+              // Start found but end is not fully received yet. Keep start data in buffer and wait for more chunks.
+              if (startIndex > 0) {
+                buffer = buffer.sublist(startIndex);
+              }
+              break;
+            }
+
+            // Extract the complete JPEG frame
+            final frame = Uint8List.fromList(buffer.sublist(startIndex, endIndex));
+            if (mounted) {
+              setState(() {
+                _frameBytes = frame;
+              });
+            }
+
+            // Remove extracted frame from buffer
+            buffer = buffer.sublist(endIndex);
+          }
+        },
+        onError: (err) {
+          debugPrint('MJPEG Stream error: $err');
+          _showPlaceholder();
+        },
+        cancelOnError: true,
+      );
+    } catch (e) {
+      debugPrint('MJPEG Stream connection failed: $e');
+      _showPlaceholder();
+    }
+  }
+
+  void _showPlaceholder() {
+    if (mounted) {
+      setState(() {
+        _frameBytes = null;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_frameBytes == null) {
+      return widget.placeholder;
+    }
+    return Image.memory(
+      _frameBytes!,
+      fit: BoxFit.cover,
+      gaplessPlayback: true,
+      width: double.infinity,
+      height: double.infinity,
     );
   }
 }

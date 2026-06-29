@@ -34,11 +34,12 @@ CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.j
 os.makedirs(EVIDENCE_DIR, exist_ok=True)
 
 # Initialize Camera and AI Engine
-buffer_manager = VideoBufferManager(video_source=0, duration_sec=2)
+buffer_manager = VideoBufferManager(video_source=0, duration_sec=10)
 ai_engine = OptimizedAIEngine()
 
 # Shared Telemetry State
 telemetry_lock = threading.Lock()
+i2c_lock = threading.Lock()
 current_lat = 0.0
 current_lng = 0.0
 current_speed = 0.0
@@ -58,10 +59,9 @@ GPIO_ENABLED = False
 try:
     import RPi.GPIO as GPIO
     GPIO.setmode(GPIO.BCM)
-    GPIO.setup(26, GPIO.IN, pull_up_down=GPIO.PUD_UP) # Crash Button
     GPIO.setup(25, GPIO.IN, pull_up_down=GPIO.PUD_UP) # Config Button
     GPIO_ENABLED = True
-    print("[INFO] RPi.GPIO initialized on GPIO 25 and 26.")
+    print("[INFO] RPi.GPIO initialized on GPIO 25.")
 except Exception as e:
     print(f"[WARNING] GPIO not initialized: {e}. Physical buttons disabled.")
 
@@ -130,28 +130,30 @@ class ICM20948Reader:
             # Emulate stable values (flat on table = 1G on Z)
             import random
             return (random.random() - 0.5) * 0.05, (random.random() - 0.5) * 0.05, 1.0 + (random.random() - 0.5) * 0.05
-        try:
-            # Pimoroni returns ax, ay, az, gx, gy, gz. Accel values are in G.
-            ax, ay, az, _, _, _ = self.imu.read_accelerometer_gyro_data()
-            return ax, ay, az
-        except Exception as e:
-            print(f"[ERROR] ICM-20948 accelerometer read error: {e}")
-            return 0.0, 0.0, 1.0
+        with i2c_lock:
+            try:
+                # Pimoroni returns ax, ay, az, gx, gy, gz. Accel values are in G.
+                ax, ay, az, _, _, _ = self.imu.read_accelerometer_gyro_data()
+                return ax, ay, az
+            except Exception as e:
+                print(f"[ERROR] ICM-20948 accelerometer read error: {e}")
+                return 0.0, 0.0, 1.0
 
     def read_heading(self):
         if not self.active or self.imu is None:
             import random
             return random.randint(0, 359)
-        try:
-            # Pimoroni returns mx, my, mz in microteslas (uT)
-            mx, my, mz = self.imu.read_magnetometer_data()
-            heading = math.atan2(my, mx) * 180 / math.pi
-            if heading < 0:
-                heading += 360
-            return int(heading)
-        except Exception as e:
-            print(f"[ERROR] ICM-20948 magnetometer/heading read error: {e}")
-            return 0
+        with i2c_lock:
+            try:
+                # Pimoroni returns mx, my, mz in microteslas (uT)
+                mx, my, mz = self.imu.read_magnetometer_data()
+                heading = math.atan2(my, mx) * 180 / math.pi
+                if heading < 0:
+                    heading += 360
+                return int(heading)
+            except Exception as e:
+                print(f"[ERROR] ICM-20948 magnetometer/heading read error: {e}")
+                return 0
 
 class BMP280Reader:
     def __init__(self, bus_id=1, address=0x76):
@@ -165,7 +167,15 @@ class BMP280Reader:
             chip_id = self.bus.read_byte_data(self.address, 0xD0)
             if chip_id in [0x58, 0x56, 0x57, 0x60]:
                 self.active = True
-                print(f"[INFO] I2C BMP280/288 initialized. Chip ID: {hex(chip_id)}")
+                # Wake up BMP280: write 0x27 (oversampling x1 for temp/press, Normal Mode) to ctrl_meas (0xF4)
+                self.bus.write_byte_data(self.address, 0xF4, 0x27)
+                # Read 24 bytes of calibration coefficients starting from 0x88
+                calib = self.bus.read_i2c_block_data(self.address, 0x88, 24)
+                import struct
+                self.dig_T1, self.dig_T2, self.dig_T3, \
+                self.dig_P1, self.dig_P2, self.dig_P3, self.dig_P4, self.dig_P5, \
+                self.dig_P6, self.dig_P7, self.dig_P8, self.dig_P9 = struct.unpack("<HhhHhhhhhhhh", bytearray(calib))
+                print(f"[INFO] I2C BMP280/288 initialized. Chip ID: {hex(chip_id)} (Normal Mode set + Calibrated).")
         except Exception:
             try:
                 import smbus
@@ -173,7 +183,15 @@ class BMP280Reader:
                 self.bus = smbus.SMBus(bus_id)
                 chip_id = self.bus.read_byte_data(self.address, 0xD0)
                 self.active = True
-                print(f"[INFO] I2C BMP280/288 initialized on 0x77. Chip ID: {hex(chip_id)}")
+                # Wake up BMP280: write 0x27 to ctrl_meas (0xF4)
+                self.bus.write_byte_data(self.address, 0xF4, 0x27)
+                # Read 24 bytes of calibration coefficients
+                calib = self.bus.read_i2c_block_data(self.address, 0x88, 24)
+                import struct
+                self.dig_T1, self.dig_T2, self.dig_T3, \
+                self.dig_P1, self.dig_P2, self.dig_P3, self.dig_P4, self.dig_P5, \
+                self.dig_P6, self.dig_P7, self.dig_P8, self.dig_P9 = struct.unpack("<HhhHhhhhhhhh", bytearray(calib))
+                print(f"[INFO] I2C BMP280/288 initialized on 0x77. Chip ID: {hex(chip_id)} (Normal Mode set + Calibrated).")
             except Exception as e:
                 print(f"[WARNING] BMP280/288 Barometer not detected: {e}. Emulating barometer.")
 
@@ -182,20 +200,47 @@ class BMP280Reader:
             import random
             return round(1013.25 + (random.random() - 0.5) * 4.0, 2), round(25.0 + (random.random() - 0.5) * 2.0, 2)
             
-        try:
-            data = self.bus.read_i2c_block_data(self.address, 0xF7, 6)
-            adc_P = (data[0] << 12) + (data[1] << 4) + (data[2] >> 4)
-            adc_T = (data[3] << 12) + (data[4] << 4) + (data[5] >> 4)
-            
-            # Approximated scaling formula for demo/stability
-            temp = (adc_T / 16384.0) * 25.0
-            press = (adc_P / 1048576.0) * 1013.25 + 300.0
-            
-            if not (10.0 <= temp <= 80.0): temp = 25.0
-            if not (900.0 <= press <= 1100.0): press = 1013.25
-            return round(press, 1), round(temp, 1)
-        except Exception:
-            return 1013.2, 25.0
+        with i2c_lock:
+            try:
+                # Read 6 bytes of data starting from 0xF7 (pressure and temperature registers)
+                data = self.bus.read_i2c_block_data(self.address, 0xF7, 6)
+                
+                # Combine bytes to form 20-bit raw values
+                adc_P = (data[0] << 12) + (data[1] << 4) + (data[2] >> 4)
+                adc_T = (data[3] << 12) + (data[4] << 4) + (data[5] >> 4)
+                
+                # 1. Calculate compensated temperature
+                var1 = (adc_T / 16384.0 - self.dig_T1 / 1024.0) * self.dig_T2
+                var2 = ((adc_T / 131072.0 - self.dig_T1 / 8192.0) * 
+                        (adc_T / 131072.0 - self.dig_T1 / 8192.0)) * self.dig_T3
+                t_fine = var1 + var2
+                temp = t_fine / 5120.0
+                
+                # 2. Calculate compensated pressure
+                var3 = (t_fine / 2.0) - 64000.0
+                var4 = var3 * var3 * self.dig_P6 / 32768.0
+                var4 = var4 + var3 * self.dig_P5 * 2.0
+                var4 = (var4 / 4.0) + (self.dig_P4 * 65536.0)
+                var3 = (self.dig_P3 * var3 * var3 / 524288.0 + self.dig_P2 * var3) / 524288.0
+                var3 = (1.0 + var3 / 32768.0) * self.dig_P1
+                
+                if var3 == 0.0:
+                    press = 1013.25
+                else:
+                    p = 1048576.0 - adc_P
+                    p = ((p - (var4 / 4096.0)) * 6250.0) / var3
+                    var3 = self.dig_P9 * p * p / 2147483648.0
+                    var4 = p * self.dig_P8 / 32768.0
+                    press = (p + (var3 + var4 + self.dig_P7) / 16.0) / 100.0
+                
+                # Fallbacks in case of bad conversion values
+                if not (10.0 <= temp <= 80.0): temp = 25.0
+                if not (900.0 <= press <= 1100.0): press = 1013.25
+                
+                return round(press, 1), round(temp, 1)
+            except Exception as e:
+                print(f"[ERROR] BMP280 read/compensation error: {e}")
+                return 1013.2, 25.0
 
 # Instantiate readers
 icm_reader = ICM20948Reader()
@@ -671,8 +716,8 @@ def background_cloud_upload_thread(timestamp, severity_level, base_score, ai_bon
 def execute_crash_alert(severity_level):
     global last_crash_trigger_time
     now = time.time()
-    if now - last_crash_trigger_time < 15.0:
-        return # Debounce repeat impacts
+    if now - last_crash_trigger_time < 60.0:
+        return # Debounce repeat impacts (prevents loop triggers from phone countdown completion)
     last_crash_trigger_time = now
     
     print(f"\n[CRITICAL TRIGGER] Crash sequence armed. Severity Level: {severity_level}!")
@@ -687,6 +732,36 @@ def execute_crash_alert(severity_level):
 
     # Get local config
     config = load_local_config()
+    
+    # Update Firebase device status immediately to "Alert" state so the cloud app gets notified instantly
+    try:
+        quick_status_payload = {
+            "deviceId": DEVICE_ID,
+            "isConnected": True,
+            "lastSeen": int(now),
+            "currentMode": "Alert",
+            "crash_triggered": True,
+            "gpsStatus": gps_status,
+            "latitude": lat,
+            "longitude": lng,
+            "satellites": sats,
+            "speed": speed,
+            "sensors": {
+                "accel_x": round(accel_x, 2),
+                "accel_y": round(accel_y, 2),
+                "accel_z": round(accel_z, 2),
+                "heading": mag_heading,
+                "pressure_hpa": baro_pressure,
+                "temperature_c": baro_temp
+            }
+        }
+        threading.Thread(
+            target=update_firebase_rtdb,
+            args=(f"device_status/{DEVICE_ID}", quick_status_payload),
+            kwargs={"max_retries": 1, "timeout": 5}
+        ).start()
+    except Exception as e:
+        print(f"[CRASH ALERT WARNING] Immediate status alert post failed: {e}")
     
     video_file = None
     keyframe_paths = []
@@ -776,11 +851,13 @@ def telemetry_sync_loop():
             sats = current_sats
             gps_status = current_gps_status
             
+        is_alert_active = (time.time() - last_crash_trigger_time < 15.0)
         status_payload = {
             "deviceId": DEVICE_ID,
             "isConnected": True,
             "lastSeen": int(time.time()),
-            "currentMode": "Armed & Monitoring",
+            "currentMode": "Alert" if is_alert_active else "Armed & Monitoring",
+            "crash_triggered": is_alert_active,
             "gpsStatus": gps_status,
             "latitude": lat,
             "longitude": lng,
@@ -818,33 +895,70 @@ sync_thread.start()
 def hardware_monitor_loop():
     global accel_x, accel_y, accel_z, mag_heading, baro_pressure, baro_temp
     print("[INFO] Hardware sensor monitor loop started.")
+    
+    # Start a slow thread to read Magnetometer and Barometer (runs at 10 Hz)
+    def slow_sensor_loop():
+        global mag_heading, baro_pressure, baro_temp
+        last_printed_press = 1013.25
+        while True:
+            try:
+                mag_heading = gy_reader.read_heading()
+                p, t = bmp_reader.read_pressure_temp()
+                baro_pressure, baro_temp = p, t
+                
+                # If pressure shifts significantly (e.g. > 0.4 hPa), print immediately for fast feedback!
+                if abs(p - last_printed_press) > 0.4:
+                    print(f"[BARO MONITOR] Dynamic pressure change: {p:.1f} hPa | Temp: {t:.1f}°C")
+                    last_printed_press = p
+            except Exception as e:
+                print(f"[ERROR] Slow sensor read error: {e}")
+            time.sleep(0.1)
+            
+    slow_thread = threading.Thread(target=slow_sensor_loop)
+    slow_thread.daemon = True
+    slow_thread.start()
+
+    # The main hardware monitor loop now acts as a high-frequency (100 Hz) accelerometer scanner
     while True:
-        # 1. Read I2C Accelerometer
-        ax, ay, az = mpu_reader.read_accelerometer()
-        accel_x, accel_y, accel_z = ax, ay, az
-        
-        # Calculate total G-force
-        g_force = math.sqrt(ax**2 + ay**2 + az**2)
-        
-        # 2. Read Magnetometer & Barometer
-        mag_heading = gy_reader.read_heading()
-        baro_pressure, baro_temp = bmp_reader.read_pressure_temp()
-        
-        # 3. Automatic crash threshold trigger (> 2.5G magnitude)
-        if g_force > 2.5:
-            print(f"[ACCEL TRIGGER] G-force spike detected: {g_force:.2f}G!")
-            threading.Thread(target=execute_crash_alert, args=('HIGH',)).start()
+        try:
+            # 1. Read Accelerometer (very fast read)
+            ax, ay, az = mpu_reader.read_accelerometer()
+            accel_x, accel_y, accel_z = ax, ay, az
+            
+            # Calculate total G-force
+            g_force = math.sqrt(ax**2 + ay**2 + az**2)
+            
+            # 2. Monitor high G-forces (useful for user feedback during testing/shaking)
+            if g_force > 1.8:
+                print(f"[ACCEL MONITOR] High G-Force detected: {g_force:.2f}G")
+            
+            # 3. Automatic crash threshold trigger (> 2.5G magnitude)
+            if g_force > 2.5:
+                print(f"[ACCEL TRIGGER] G-force spike detected: {g_force:.2f}G!")
+                threading.Thread(target=execute_crash_alert, args=('HIGH',)).start()
+        except Exception as e:
+            print(f"[ERROR] Accelerometer read error: {e}")
             
         # 4. Check physical BCM GPIO buttons if enabled
         if GPIO_ENABLED:
-            if GPIO.input(26) == GPIO.LOW: # Physical Crash Button
-                print("[BUTTON] Physical Crash Button Pressed!")
-                threading.Thread(target=execute_crash_alert, args=('HIGH',)).start()
             if GPIO.input(25) == GPIO.LOW: # Physical Config Mode Hold
-                print("[BUTTON] Configuration Toggle Pressed!")
-                # Can trigger Wi-Fi AP reload if desired
+                print("[BUTTON] Configuration Toggle Pressed, holding...")
+                press_start = time.time()
+                triggered = False
+                while GPIO.input(25) == GPIO.LOW:
+                    time.sleep(0.1)
+                    if time.time() - press_start >= 10.0:
+                        triggered = True
+                        break
                 
-        time.sleep(0.1)
+                if triggered:
+                    print("[BUTTON] Config button held for 10s! Activating configuration mode...")
+                    config = load_local_config()
+                    config["configured"] = False
+                    save_local_config(config)
+                
+        # Sleep for 10ms (100 Hz sampling rate) to capture fast shake/crash transients
+        time.sleep(0.01)
 
 # Start hardware monitoring thread
 hw_thread = threading.Thread(target=hardware_monitor_loop)

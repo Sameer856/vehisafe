@@ -21,7 +21,7 @@ class BackgroundServiceManager {
       const AndroidNotificationChannel channel = AndroidNotificationChannel(
         channelId,
         'VehiSafe Background Monitor',
-        description: 'Handles background telemetry polling from the Raspberry Pi board',
+        description: 'Handles background telemetry polling from the VehiSafe board',
         importance: Importance.low,
       );
 
@@ -38,7 +38,7 @@ class BackgroundServiceManager {
         isForegroundMode: true,
         notificationChannelId: channelId,
         initialNotificationTitle: 'VehiSafe Active Monitoring',
-        initialNotificationContent: 'Connecting to Raspberry Pi (192.168.100.198:8080)...',
+        initialNotificationContent: 'Connecting to VehiSafe (192.168.100.100:8080)...',
       ),
       iosConfiguration: IosConfiguration(
         autoStart: false,
@@ -127,10 +127,10 @@ void onStart(ServiceInstance service) async {
         try {
           final client = HttpClient();
           client.connectionTimeout = const Duration(seconds: 3);
-          final request = await client.getUrl(Uri.parse('http://192.168.100.198:8080/simulate?severity=$severityLevel'));
+          final request = await client.getUrl(Uri.parse('http://192.168.100.100:8080/simulate?severity=$severityLevel'));
           await request.close();
         } catch (e) {
-          debugPrint('[BACKGROUND SERVICE] Pi unreachable at 192.168.100.198: $e');
+          debugPrint('[BACKGROUND SERVICE] Pi unreachable at 192.168.100.100: $e');
           // Post simulation trigger to Firebase RTDB for cloud alert fallback
           try {
             final client = HttpClient();
@@ -257,7 +257,7 @@ void onStart(ServiceInstance service) async {
       final client = HttpClient();
       client.connectionTimeout = const Duration(seconds: 1);
       
-      var requestUrl = 'http://192.168.100.198:8080/status';
+      var requestUrl = 'http://192.168.100.100:8080/status';
       var isCloud = false;
       HttpClientRequest request;
       
@@ -302,7 +302,7 @@ void onStart(ServiceInstance service) async {
       if (service is AndroidServiceInstance && !isAlertActive) {
         service.setForegroundNotificationInfo(
           title: 'VehiSafe: Searching...',
-          content: 'Searching for Pi (192.168.100.198) & Firebase cloud...',
+          content: 'Searching for Pi (192.168.100.100) & Firebase cloud...',
         );
       }
     }

@@ -16,7 +16,7 @@ class MockVehiSafeService implements VehiSafeService {
   final _crashAlertController = StreamController<Map<String, dynamic>>.broadcast();
   
   Timer? _sensorTimer;
-  final _random = Random();
+
   
   bool _isConnected = false;
   bool _isConfigured;
@@ -66,7 +66,7 @@ class MockVehiSafeService implements VehiSafeService {
       lastSyncTime: _lastSyncTime,
       latitude: _latitude,
       longitude: _longitude,
-      deviceName: 'VehiSafe-Pi-System',
+      deviceName: 'VehiSafe',
       satellites: _satellites,
       speed: _speed,
     ));
@@ -82,7 +82,7 @@ class MockVehiSafeService implements VehiSafeService {
         final client = HttpClient();
         client.connectionTimeout = const Duration(seconds: 1);
         
-        var requestUrl = 'http://192.168.100.198:8080/status';
+        var requestUrl = 'http://192.168.100.100:8080/status';
         var isCloudFallback = false;
         HttpClientRequest request;
         
@@ -142,27 +142,21 @@ class MockVehiSafeService implements VehiSafeService {
         debugPrint('Telemetry status fetch failed: $e');
       }
 
-      // Mock Fallback Generation (Runs if ESP32 status is unreachable)
-      final imuG = 0.95 + _random.nextDouble() * 0.1; // ~1.0 G
-      final pressure = 1011.0 + _random.nextDouble() * 4.0; // ~1013 hPa
-      final speed = 40.0 + _random.nextDouble() * 15.0; // ~45-55 km/h
-      final signal = 80 + _random.nextInt(20); // 80% to 100%
-
-      // Mock slight coordinates movement
-      _latitude += (_random.nextDouble() - 0.5) * 0.0001;
-      _longitude += (_random.nextDouble() - 0.5) * 0.0001;
-      _lastSyncTime = DateTime.now();
-      _batteryPercent = max(20, _batteryPercent - (_random.nextInt(2) == 0 ? 1 : 0));
-      _speed = speed;
-      _satellites = signal ~/ 10;
-
+      // Mock Fallback: When the hardware device status fetch fails, mark it offline.
+      // We zero out current speed and satellites, but preserve the last known GPS coordinates and sync time.
+      _isConnected = false;
+      _networkStatus = 'Offline';
+      _gpsStatus = 'No Signal';
+      _speed = 0.0;
+      _satellites = 0;
+      
       _publishStatus();
 
       _sensorStreamController.add(SensorSnapshot(
-        imuG: double.parse(imuG.toStringAsFixed(2)),
-        pressureHpa: double.parse(pressure.toStringAsFixed(1)),
-        speedKmh: double.parse(speed.toStringAsFixed(1)),
-        gpsSignal: signal,
+        imuG: 0.0,
+        pressureHpa: 0.0,
+        speedKmh: 0.0,
+        gpsSignal: 0,
       ));
     });
   }
@@ -217,20 +211,20 @@ class MockVehiSafeService implements VehiSafeService {
 
     String videoUrl = 'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4';
     
-    // Hit the real Raspberry Pi Edge AI server or fall back to Firebase Cloud Trigger
+    // Hit the real VehiSafe Edge AI server or fall back to Firebase Cloud Trigger
     try {
       final client = HttpClient();
       client.connectionTimeout = const Duration(seconds: 3);
       
       // Hitting local simulate endpoint on Pi
-      final request = await client.getUrl(Uri.parse('http://192.168.100.198:8080/simulate?severity=$severityLevel'));
+      final request = await client.getUrl(Uri.parse('http://192.168.100.100:8080/simulate?severity=$severityLevel'));
       final response = await request.close();
       if (response.statusCode == 200) {
         final responseBody = await response.transform(utf8.decoder).join();
         debugPrint('Local Pi Response: $responseBody');
       }
     } catch (e) {
-      debugPrint('Local Pi unreachable at 192.168.100.198. Posting simulation trigger to cloud. Details: $e');
+      debugPrint('Local Pi unreachable at 192.168.100.100. Posting simulation trigger to cloud. Details: $e');
       // Trigger simulation over the cloud by PUTting directly to Firebase RTDB for the device
       try {
         final client = HttpClient();
@@ -346,7 +340,7 @@ class MockVehiSafeService implements VehiSafeService {
   Future<List<String>> scanForDevices() async {
     // Minimal delay just for smooth visual transition
     await Future.delayed(const Duration(milliseconds: 500));
-    return ['VehiSafe_Setup'];
+    return ['VehiSafe'];
   }
 
   @override
@@ -423,7 +417,7 @@ class MockVehiSafeService implements VehiSafeService {
       final bodyBytes = utf8.encode(body);
 
       onProgress(0.6);
-      final request = await client.postUrl(Uri.parse('http://192.168.100.198:8080/save'));
+      final request = await client.postUrl(Uri.parse('http://192.168.100.100:8080/save'));
       request.headers.contentType = ContentType('application', 'x-www-form-urlencoded', charset: 'utf-8');
       request.contentLength = bodyBytes.length;
       
@@ -447,7 +441,7 @@ class MockVehiSafeService implements VehiSafeService {
 
     // Sync succeeds if either cloud or local succeeded
     if (!firebaseSuccess && !localSuccess) {
-      throw Exception('Could not sync configuration. Please check your internet connection or make sure you are connected to the "VehiSafe_Setup" WiFi network.');
+      throw Exception('Could not sync configuration. Please check your internet connection or make sure you are connected to the "VehiSafe" WiFi network.');
     }
 
     _isConfigured = true;

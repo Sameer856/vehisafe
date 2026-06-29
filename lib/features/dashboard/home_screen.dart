@@ -83,14 +83,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       backgroundColor: AppColors.darkBackground,
       appBar: AppBar(
         title: const Text(
-          'VEHISAFE CONTROL PANEL',
-          style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.5, fontSize: 18),
+          'VEHISAFE SYSTEM',
+          style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.5, fontSize: 18, fontFamily: 'NegritaPro'),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.white),
+            icon: const Icon(Icons.refresh, color: AppColors.darkTextPrimary),
             onPressed: () {
               // Trigger a quick status flash or refresh
               ScaffoldMessenger.of(context).showSnackBar(
@@ -135,7 +135,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             style: const TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                              color: AppColors.darkTextPrimary,
                             ),
                           ),
                         ],
@@ -197,7 +197,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       const SizedBox(height: 8),
                       Text(
                         'Perform 2 safe drives to calibrate collision sensors for your ${vehicle?.type ?? 'vehicle'}. Treads completed: ${settings.calibrationDrives}/2.',
-                        style: const TextStyle(color: Colors.white, fontSize: 13),
+                        style: const TextStyle(color: AppColors.darkTextPrimary, fontSize: 13),
                       ),
                       const SizedBox(height: 12),
                       ElevatedButton(
@@ -242,7 +242,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Widget _buildStatusWidgets(DeviceStatus status) {
     Color systemStatusColor = AppColors.statusConnected;
-    if (status.currentMode == 'Configuration') {
+    String modeText = status.currentMode.toUpperCase();
+    if (!status.isConnected) {
+      systemStatusColor = Colors.grey;
+      modeText = 'OFFLINE';
+    } else if (status.currentMode == 'Configuration') {
       systemStatusColor = Colors.amber;
     } else if (status.currentMode == 'Alert') {
       systemStatusColor = AppColors.severityHigh;
@@ -272,11 +276,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       const SizedBox(width: 8),
                       Text(
                         status.deviceName,
-                        style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 16),
+                        style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.darkTextPrimary, fontSize: 16),
                       ),
                     ],
                   ),
-                  _buildGlowBadge(status.currentMode.toUpperCase(), systemStatusColor),
+                  _buildGlowBadge(modeText, systemStatusColor),
                 ],
               ),
               const Divider(color: AppColors.darkDivider, height: 24),
@@ -284,7 +288,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text('Firmware Version', style: TextStyle(color: Colors.grey, fontSize: 13)),
-                  Text(status.firmwareVersion, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                  Text(status.firmwareVersion, style: const TextStyle(color: AppColors.darkTextPrimary, fontWeight: FontWeight.bold, fontSize: 13)),
                 ],
               ),
               const SizedBox(height: 8),
@@ -292,7 +296,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text('Hardware Model', style: TextStyle(color: Colors.grey, fontSize: 13)),
-                  const Text('Raspberry Pi & 4G USB Modem', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                  const Text('VehiSafe', style: TextStyle(color: AppColors.darkTextPrimary, fontWeight: FontWeight.bold, fontSize: 13)),
                 ],
               ),
             ],
@@ -306,44 +310,44 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             Expanded(
               child: _buildIndicatorCard(
                 'CELL LTE SIGNAL',
-                status.networkStatus,
-                status.networkStatus == 'LTE Connected'
+                status.isConnected ? status.networkStatus : '--',
+                status.isConnected && status.networkStatus == 'LTE Connected'
                     ? Icons.signal_cellular_4_bar
-                    : (status.networkStatus == 'Searching...' ? Icons.network_ping : Icons.signal_cellular_off),
-                status.networkStatus == 'LTE Connected'
+                    : (status.isConnected && status.networkStatus == 'Searching...' ? Icons.network_ping : Icons.signal_cellular_off),
+                status.isConnected && status.networkStatus == 'LTE Connected'
                     ? Colors.green
-                    : (status.networkStatus == 'Searching...' ? Colors.amber : Colors.red),
-                status.networkStatus == 'LTE Connected' ? 'Cellular Active' : 'No LTE Service',
-                status.networkStatus == 'Searching...',
+                    : (status.isConnected && status.networkStatus == 'Searching...' ? Colors.amber : Colors.grey),
+                status.isConnected && status.networkStatus == 'LTE Connected' ? 'Cellular Active' : 'Offline',
+                status.isConnected && status.networkStatus == 'Searching...',
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: _buildIndicatorCard(
                 'GPS SAT SYSTEM',
-                status.gpsStatus,
-                status.gpsStatus == 'GPS Locked'
+                status.isConnected ? status.gpsStatus : '--',
+                status.isConnected && status.gpsStatus == 'GPS Locked'
                     ? Icons.gps_fixed
-                    : (status.gpsStatus == 'GPS Acquiring' ? Icons.gps_not_fixed : Icons.location_off),
-                status.gpsStatus == 'GPS Locked'
+                    : (status.isConnected && status.gpsStatus == 'GPS Acquiring' ? Icons.gps_not_fixed : Icons.location_off),
+                status.isConnected && status.gpsStatus == 'GPS Locked'
                     ? Colors.green
-                    : (status.gpsStatus == 'GPS Acquiring' ? Colors.amber : Colors.red),
-                status.gpsStatus == 'GPS Locked' ? '${status.satellites} Satellites' : 'Locating Grid...',
-                status.gpsStatus == 'GPS Acquiring',
+                    : (status.isConnected && status.gpsStatus == 'GPS Acquiring' ? Colors.amber : Colors.grey),
+                status.isConnected && status.gpsStatus == 'GPS Locked' ? '${status.satellites} Satellites' : 'Offline',
+                status.isConnected && status.gpsStatus == 'GPS Acquiring',
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: _buildIndicatorCard(
                 'DEVICE BATTERY',
-                '${status.batteryPercent}%',
-                status.batteryPercent > 50
+                status.isConnected ? '${status.batteryPercent}%' : '--',
+                status.isConnected && status.batteryPercent > 50
                     ? Icons.battery_full
-                    : (status.batteryPercent > 20 ? Icons.battery_charging_full : Icons.battery_alert),
-                status.batteryPercent > 50
+                    : (status.isConnected && status.batteryPercent > 20 ? Icons.battery_charging_full : Icons.battery_alert),
+                status.isConnected && status.batteryPercent > 50
                     ? Colors.green
-                    : (status.batteryPercent > 20 ? Colors.amber : Colors.red),
-                'USB-C Connected',
+                    : (status.isConnected && status.batteryPercent > 20 ? Colors.amber : Colors.grey),
+                status.isConnected ? 'Connected' : 'Offline',
                 false,
               ),
             ),
@@ -414,7 +418,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           const Spacer(),
           Text(
             value,
-            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: Colors.white),
+            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: AppColors.darkTextPrimary),
           ),
           const SizedBox(height: 2),
           Text(
@@ -460,9 +464,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                Text('Lat: $latStr', style: const TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.bold, fontSize: 12, color: Colors.white)),
+                Text('Lat: $latStr', style: const TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.darkTextPrimary)),
                 const SizedBox(height: 4),
-                Text('Lng: $lngStr', style: const TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.bold, fontSize: 12, color: Colors.white)),
+                Text('Lng: $lngStr', style: const TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.darkTextPrimary)),
                 const SizedBox(height: 12),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -521,12 +525,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 const SizedBox(height: 16),
                 Text(
                   'Alerts Logged: $total',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white),
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.darkTextPrimary),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Cancelled: $falseAlerts',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white),
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.darkTextPrimary),
                 ),
                 const SizedBox(height: 12),
                 Text(
@@ -579,7 +583,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           Expanded(
             child: Text(
               'VehiSafe cellular cloud sync failure. Check USB Modem LTE status.',
-              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+              style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.darkTextPrimary),
             ),
           )
         ],
@@ -611,7 +615,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
               child: const Icon(Icons.contact_phone_outlined, color: Colors.blue),
             ),
-            title: const Text('Manage Emergency Contacts', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: Colors.white)),
+            title: const Text('Manage Emergency Contacts', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: AppColors.darkTextPrimary)),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
             onTap: () => ref.read(routerProvider).go('/settings'),
           ),
@@ -626,7 +630,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
               child: const Icon(Icons.sensors, color: Colors.purple),
             ),
-            title: const Text('Live Telemetry Dashboard', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: Colors.white)),
+            title: const Text('Live Telemetry Dashboard', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: AppColors.darkTextPrimary)),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
             onTap: () => ref.read(routerProvider).go('/monitoring'),
           ),

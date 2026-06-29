@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../constants/colors.dart';
 
 class AppTheme {
@@ -19,10 +20,12 @@ class AppTheme {
         backgroundColor: AppColors.darkBackground,
         elevation: 0,
         centerTitle: true,
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
         titleTextStyle: TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.bold,
           color: AppColors.darkTextPrimary,
+          fontFamily: 'NegritaPro',
         ),
         iconTheme: IconThemeData(color: AppColors.darkTextPrimary),
       ),
@@ -31,16 +34,19 @@ class AppTheme {
           fontSize: 32,
           fontWeight: FontWeight.bold,
           color: AppColors.darkTextPrimary,
+          fontFamily: 'NegritaPro',
         ),
         headlineMedium: TextStyle(
           fontSize: 24,
           fontWeight: FontWeight.bold,
           color: AppColors.darkTextPrimary,
+          fontFamily: 'NegritaPro',
         ),
         titleLarge: TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.w600,
           color: AppColors.darkTextPrimary,
+          fontFamily: 'NegritaPro',
         ),
         bodyLarge: TextStyle(
           fontSize: 16,
@@ -54,7 +60,7 @@ class AppTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.brandPrimary,
-          foregroundColor: Colors.white,
+          foregroundColor: Colors.black,
           minimumSize: const Size.fromHeight(52),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -116,10 +122,12 @@ class AppTheme {
         backgroundColor: AppColors.lightBackground,
         elevation: 0,
         centerTitle: true,
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
         titleTextStyle: TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.bold,
           color: AppColors.lightTextPrimary,
+          fontFamily: 'NegritaPro',
         ),
         iconTheme: IconThemeData(color: AppColors.lightTextPrimary),
       ),
@@ -128,16 +136,19 @@ class AppTheme {
           fontSize: 32,
           fontWeight: FontWeight.bold,
           color: AppColors.lightTextPrimary,
+          fontFamily: 'NegritaPro',
         ),
         headlineMedium: TextStyle(
           fontSize: 24,
           fontWeight: FontWeight.bold,
           color: AppColors.lightTextPrimary,
+          fontFamily: 'NegritaPro',
         ),
         titleLarge: TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.w600,
           color: AppColors.lightTextPrimary,
+          fontFamily: 'NegritaPro',
         ),
         bodyLarge: TextStyle(
           fontSize: 16,
@@ -151,7 +162,7 @@ class AppTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.brandPrimary,
-          foregroundColor: Colors.white,
+          foregroundColor: Colors.black,
           minimumSize: const Size.fromHeight(52),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),

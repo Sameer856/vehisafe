@@ -45,13 +45,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.darkSurface,
-        title: Text(isEditing ? 'Edit Contact' : 'Add Contact', style: const TextStyle(color: Colors.white)),
+        title: Text(isEditing ? 'Edit Contact' : 'Add Contact', style: const TextStyle(color: AppColors.darkTextPrimary)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: _nameController,
-              style: const TextStyle(color: Colors.white),
+              style: const TextStyle(color: AppColors.darkTextPrimary),
               decoration: const InputDecoration(
                 labelText: 'Full Name',
                 labelStyle: TextStyle(color: AppColors.darkTextSecondary),
@@ -62,7 +62,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             TextField(
               controller: _phoneController,
               keyboardType: TextInputType.phone,
-              style: const TextStyle(color: Colors.white),
+              style: const TextStyle(color: AppColors.darkTextPrimary),
               decoration: const InputDecoration(
                 labelText: 'Phone Number',
                 labelStyle: TextStyle(color: AppColors.darkTextSecondary),
@@ -145,17 +145,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
           backgroundColor: AppColors.darkSurface,
-          title: const Text('Vehicle Details', style: TextStyle(color: Colors.white)),
+          title: const Text('Vehicle Details', style: TextStyle(color: AppColors.darkTextPrimary)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Vehicle Type:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white)),
+              const Text('Vehicle Type:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.darkTextPrimary)),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
                 value: selectedType,
                 dropdownColor: AppColors.darkSurface,
-                style: const TextStyle(color: Colors.white),
+                style: const TextStyle(color: AppColors.darkTextPrimary),
                 decoration: const InputDecoration(
                   enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppColors.darkDivider)),
                 ),
@@ -169,7 +169,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 },
               ),
               const SizedBox(height: 16),
-              const Text('Model Year:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white)),
+              const Text('Model Year:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.darkTextPrimary)),
               const SizedBox(height: 8),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -180,16 +180,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         setDialogState(() => selectedYear--);
                       }
                     },
-                    icon: const Icon(Icons.remove, color: Colors.white),
+                    icon: const Icon(Icons.remove, color: AppColors.darkTextPrimary),
                   ),
-                  Text('$selectedYear', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
+                  Text('$selectedYear', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.darkTextPrimary)),
                   IconButton(
                     onPressed: () {
                       if (selectedYear < DateTime.now().year + 1) {
                         setDialogState(() => selectedYear++);
                       }
                     },
-                    icon: const Icon(Icons.add, color: Colors.white),
+                    icon: const Icon(Icons.add, color: AppColors.darkTextPrimary),
                   ),
                 ],
               ),
@@ -303,7 +303,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
           return AlertDialog(
             backgroundColor: AppColors.darkSurface,
-            title: Text(title, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white)),
+            title: Text(title, textAlign: TextAlign.center, style: const TextStyle(color: AppColors.darkTextPrimary)),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -388,7 +388,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           if (step == 1) {
             return AlertDialog(
               backgroundColor: AppColors.darkSurface,
-              title: const Text('Transfer Device - Step 1', textAlign: TextAlign.center, style: TextStyle(color: Colors.white)),
+              title: const Text('Transfer Device - Step 1', textAlign: TextAlign.center, style: TextStyle(color: AppColors.darkTextPrimary)),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -433,7 +433,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           if (step == 2) {
             return AlertDialog(
               backgroundColor: AppColors.darkSurface,
-              title: const Text('Transfer Device - Step 2', style: TextStyle(color: Colors.white)),
+              title: const Text('Transfer Device - Step 2', style: TextStyle(color: AppColors.darkTextPrimary)),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -441,11 +441,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   const Text('Select the vehicle details of the target vehicle:',
                       style: TextStyle(fontSize: 12, color: Colors.grey)),
                   const SizedBox(height: 16),
-                  const Text('Vehicle Type:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white)),
+                  const Text('Vehicle Type:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.darkTextPrimary)),
                   const SizedBox(height: 6),
                   DropdownButtonFormField<String>(
                     dropdownColor: AppColors.darkSurface,
-                    style: const TextStyle(color: Colors.white),
+                    style: const TextStyle(color: AppColors.darkTextPrimary),
                     decoration: const InputDecoration(
                       enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppColors.darkDivider)),
                     ),
@@ -460,7 +460,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     },
                   ),
                   const SizedBox(height: 16),
-                  const Text('Model Year:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white)),
+                  const Text('Model Year:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.darkTextPrimary)),
                   const SizedBox(height: 6),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -471,16 +471,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             setWizardState(() => selectedYear--);
                           }
                         },
-                        icon: const Icon(Icons.remove, color: Colors.white),
+                        icon: const Icon(Icons.remove, color: AppColors.darkTextPrimary),
                       ),
-                      Text('$selectedYear', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
+                      Text('$selectedYear', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.darkTextPrimary)),
                       IconButton(
                         onPressed: () {
                           if (selectedYear < DateTime.now().year + 1) {
                             setWizardState(() => selectedYear++);
                           }
                         },
-                        icon: const Icon(Icons.add, color: Colors.white),
+                        icon: const Icon(Icons.add, color: AppColors.darkTextPrimary),
                       ),
                     ],
                   ),
@@ -513,16 +513,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           // Step 3
           return AlertDialog(
             backgroundColor: AppColors.darkSurface,
-            title: const Text('Device Transferred!', style: TextStyle(color: Colors.white)),
+            title: const Text('Device Transferred!', style: TextStyle(color: AppColors.darkTextPrimary)),
             content: const Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(Icons.check_circle, color: Colors.green, size: 64),
                 SizedBox(height: 16),
                 Text(
-                  'VehiSafe Raspberry Pi configuration updated. Please complete 2 calibration drives in your new vehicle to re-train sensor collision profiles.',
+                  'VehiSafe configuration updated. Please complete 2 calibration drives in your new vehicle to re-train sensor collision profiles.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 13, color: Colors.white70),
+                  style: TextStyle(fontSize: 13, color: AppColors.darkTextSecondary),
                 ),
               ],
             ),
@@ -544,9 +544,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.darkSurface,
-        title: const Text('Enter Configuration Mode?', style: TextStyle(color: Colors.white)),
+        title: const Text('Enter Configuration Mode?', style: TextStyle(color: AppColors.darkTextPrimary)),
         content: const Text(
-          'This puts the Raspberry Pi device into local configuration AP mode. Cellular telemetry sync will suspend, and you will need to re-pair via local WiFi to upload parameters.',
+          'This puts the VehiSafe device into local configuration AP mode. Cellular telemetry sync will suspend, and you will need to re-pair via local WiFi to upload parameters.',
           style: TextStyle(color: AppColors.darkTextSecondary, fontSize: 13),
         ),
         actions: [
@@ -581,7 +581,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.darkSurface,
-        title: const Text('Custom SMS Template', style: TextStyle(color: Colors.white)),
+        title: const Text('Custom SMS Template', style: TextStyle(color: AppColors.darkTextPrimary)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -594,7 +594,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             TextField(
               controller: controller,
               maxLines: 3,
-              style: const TextStyle(color: Colors.white),
+              style: const TextStyle(color: AppColors.darkTextPrimary),
               decoration: const InputDecoration(
                 hintText: 'Enter alert message prefix...',
                 hintStyle: TextStyle(color: Colors.grey),
@@ -647,7 +647,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         backgroundColor: AppColors.darkSurface,
         title: const Text('Factory Reset System?', style: TextStyle(color: Colors.red)),
         content: const Text(
-          'This will permanently delete emergency contacts, PIN codes, calibration steps, and history logs from both the app and the Raspberry Pi unit. All pairings will wipe.',
+          'This will permanently delete emergency contacts, PIN codes, calibration steps, and history logs from both the app and the VehiSafe unit. All pairings will wipe.',
           style: TextStyle(color: AppColors.darkTextSecondary, fontSize: 13),
         ),
         actions: [
@@ -716,7 +716,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ),
                 margin: const EdgeInsets.only(bottom: 8),
                 child: ListTile(
-                  title: Text(contact.name, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                  title: Text(contact.name, style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.darkTextPrimary)),
                   subtitle: Text(contact.phoneNumber, style: const TextStyle(color: AppColors.darkTextSecondary)),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -762,7 +762,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               children: [
                 ListTile(
                   leading: const Icon(Icons.directions_car, color: AppColors.brandPrimary),
-                  title: const Text('Vehicle Details', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white)),
+                  title: const Text('Vehicle Details', style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.darkTextPrimary)),
                   subtitle: Text(vehicle != null ? '${vehicle.type} | Model Year: ${vehicle.year}' : 'Not configured', style: const TextStyle(color: AppColors.darkTextSecondary)),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
                   onTap: _showVehicleConfigDialog,
@@ -770,7 +770,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 const Divider(color: AppColors.darkDivider, height: 1),
                 ListTile(
                   leading: const Icon(Icons.swap_horiz, color: Colors.amber),
-                  title: const Text('Transfer Device to Another Vehicle', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white)),
+                  title: const Text('Transfer Device to Another Vehicle', style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.darkTextPrimary)),
                   subtitle: const Text('Migrate hardware profile securely', style: TextStyle(color: AppColors.darkTextSecondary)),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
                   onTap: _showTransferDeviceWizard,
@@ -778,7 +778,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 const Divider(color: AppColors.darkDivider, height: 1),
                 ListTile(
                   leading: const Icon(Icons.wifi_tethering, color: Colors.amber),
-                  title: const Text('Device Reconfiguration', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white)),
+                  title: const Text('Device Reconfiguration', style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.darkTextPrimary)),
                   subtitle: const Text('Re-enter setup AP and configuration upload', style: TextStyle(color: AppColors.darkTextSecondary)),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
                   onTap: _enterConfigurationMode,
@@ -786,7 +786,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 const Divider(color: AppColors.darkDivider, height: 1),
                 ListTile(
                   leading: const Icon(Icons.settings_input_antenna, color: Colors.blue),
-                  title: const Text('Enter Configuration Mode', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white)),
+                  title: const Text('Enter Configuration Mode', style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.darkTextPrimary)),
                   subtitle: const Text('Suspend cell sync & pair local WiFi network', style: TextStyle(color: AppColors.darkTextSecondary)),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
                   onTap: _enterConfigurationMode,
@@ -809,7 +809,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               children: [
                 ListTile(
                   leading: const Icon(Icons.lock_outline, color: Colors.green),
-                  title: const Text('Change Security PIN', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white)),
+                  title: const Text('Change Security PIN', style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.darkTextPrimary)),
                   subtitle: const Text('Re-authenticate and reset 4-digit code', style: TextStyle(color: AppColors.darkTextSecondary)),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
                   onTap: _showChangePinDialog,
@@ -817,7 +817,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 const Divider(color: AppColors.darkDivider, height: 1),
                 SwitchListTile(
                   secondary: const Icon(Icons.fingerprint, color: Colors.teal),
-                  title: const Text('Biometric Authentication', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white)),
+                  title: const Text('Biometric Authentication', style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.darkTextPrimary)),
                   subtitle: const Text('Use fingerprint for fast cancel triggers', style: TextStyle(color: AppColors.darkTextSecondary)),
                   value: settings.biometricEnabled,
                   activeColor: AppColors.brandPrimary,
@@ -843,7 +843,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               children: [
                 SwitchListTile(
                   secondary: const Icon(Icons.message_outlined, color: Colors.blue),
-                  title: const Text('SMS Contact Alerts', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white)),
+                  title: const Text('SMS Contact Alerts', style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.darkTextPrimary)),
                   subtitle: const Text('Send SMS links with GPS coordinates', style: TextStyle(color: AppColors.darkTextSecondary)),
                   value: _smsEnabled,
                   activeColor: AppColors.brandPrimary,
@@ -852,7 +852,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 const Divider(color: AppColors.darkDivider, height: 1),
                 SwitchListTile(
                   secondary: const Icon(Icons.notifications_active_outlined, color: Colors.purple),
-                  title: const Text('Critical Push Banners', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white)),
+                  title: const Text('Critical Push Banners', style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.darkTextPrimary)),
                   subtitle: const Text('Receive heads-up status alerts', style: TextStyle(color: AppColors.darkTextSecondary)),
                   value: _pushEnabled,
                   activeColor: AppColors.brandPrimary,
@@ -861,7 +861,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 const Divider(color: AppColors.darkDivider, height: 1),
                 ListTile(
                   leading: const Icon(Icons.edit_note, color: Colors.teal),
-                  title: const Text('Custom Alert Message', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white)),
+                  title: const Text('Custom Alert Message', style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.darkTextPrimary)),
                   subtitle: Text(
                     settings.customMessage,
                     maxLines: 1,
@@ -887,7 +887,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
             child: SwitchListTile(
               secondary: const Icon(Icons.developer_mode, color: Colors.grey),
-              title: const Text('Developer Mode', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white)),
+              title: const Text('Developer Mode', style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.darkTextPrimary)),
               subtitle: const Text('Enables mock crash simulation dashboards', style: TextStyle(color: AppColors.darkTextSecondary)),
               value: settings.developerMode,
               activeColor: AppColors.brandPrimary,

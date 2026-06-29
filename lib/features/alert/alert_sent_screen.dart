@@ -74,6 +74,53 @@ class AlertSentScreen extends ConsumerWidget {
                 if (alertState.videoUrl != null) ...[
                   CrashVideoPlayer(videoUrl: alertState.videoUrl!),
                   const SizedBox(height: 24),
+                ] else ...[
+                  Container(
+                    height: 220,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.brandPrimary.withValues(alpha: 0.3), width: 1.5),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const SizedBox(
+                          width: 36,
+                          height: 36,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 3,
+                            valueColor: AlwaysStoppedAnimation(AppColors.brandPrimary),
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        const Text(
+                          'COMPILING EVIDENCE FOOTAGE',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.brandPrimary,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                          child: Text(
+                            'VehiSafe Edge AI is parsing video frames, computing collision severity, and uploading evidence to storage...',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
                 ],
                 
                 // Metadata Box

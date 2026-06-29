@@ -24,7 +24,7 @@ class DeviceStatus {
     this.lastSyncTime,
     this.latitude = 37.77492,
     this.longitude = -122.41941,
-    this.deviceName = 'VehiSafe-Pi-System',
+    this.deviceName = 'VehiSafe',
     this.satellites = 0,
     this.speed = 0.0,
   });
@@ -59,7 +59,7 @@ class DeviceStatus {
       lastSyncTime: map['lastSyncTime'] != null ? DateTime.parse(map['lastSyncTime'] as String) : null,
       latitude: map['latitude'] != null ? (map['latitude'] as num).toDouble() : 37.77492,
       longitude: map['longitude'] != null ? (map['longitude'] as num).toDouble() : -122.41941,
-      deviceName: map['deviceName'] as String? ?? 'VehiSafe-Pi-System',
+      deviceName: map['deviceName'] as String? ?? 'VehiSafe',
       satellites: map['satellites'] as int? ?? 0,
       speed: map['speed'] != null ? (map['speed'] as num).toDouble() : 0.0,
     );

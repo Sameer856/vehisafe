@@ -43,7 +43,7 @@ class VehiSafeApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       
       // Theme settings
-      themeMode: ThemeMode.dark, // Default to premium dark theme
+      themeMode: ThemeMode.light, // Default to premium light theme
       darkTheme: AppTheme.darkTheme,
       theme: AppTheme.lightTheme,
       
