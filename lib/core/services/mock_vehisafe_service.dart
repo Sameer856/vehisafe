@@ -391,6 +391,8 @@ class MockVehiSafeService implements VehiSafeService {
     final c3 = contacts.length > 2 ? contacts[2].phoneNumber : '';
 
     bool firebaseSuccess = false;
+    String lastFirebaseError = 'None';
+    String lastLocalError = 'None';
 
     // 1. Sync configuration to Firebase RTDB over the internet
     try {
@@ -418,9 +420,11 @@ class MockVehiSafeService implements VehiSafeService {
         debugPrint('Cloud Config sync successful.');
       } else {
         debugPrint('Cloud Config sync returned status: ${response.statusCode}');
+        lastFirebaseError = 'Status ${response.statusCode}';
       }
     } catch (e) {
       debugPrint('Cloud Config sync failed: $e');
+      lastFirebaseError = e.toString();
     }
 
     onProgress(0.5);
@@ -429,10 +433,11 @@ class MockVehiSafeService implements VehiSafeService {
     bool localSuccess = false;
     final targetIps = [_activeLocalIp, _activeLocalIp == '192.168.4.1' ? '192.168.100.100' : '192.168.4.1'];
     
+    List<String> localErrors = [];
     for (final ip in targetIps) {
       try {
         final client = HttpClient();
-        client.connectionTimeout = const Duration(seconds: 2);
+        client.connectionTimeout = const Duration(seconds: 5); // Extended timeout for mobile handshakes
 
         final body = 'contact1=${Uri.encodeQueryComponent(c1)}'
             '&contact2=${Uri.encodeQueryComponent(c2)}'
@@ -460,17 +465,24 @@ class MockVehiSafeService implements VehiSafeService {
           _activeLocalIp = ip; // Lock onto the working IP
           localSuccess = true;
           break;
+        } else {
+          localErrors.add('$ip: Status ${response.statusCode}');
         }
       } catch (e) {
         debugPrint('Pi Hardware Local Config unreachable at $ip: $e');
+        localErrors.add('$ip: $e');
       }
+    }
+    
+    if (localErrors.isNotEmpty) {
+      lastLocalError = localErrors.join(' | ');
     }
 
     onProgress(1.0);
 
     // Sync succeeds if either cloud or local succeeded
     if (!firebaseSuccess && !localSuccess) {
-      throw Exception('Could not sync configuration. Please check your internet connection or make sure you are connected to the "VehiSafe" WiFi network.');
+      throw Exception('Could not sync configuration.\n\nCloud Error: $lastFirebaseError\n\nLocal Error: $lastLocalError');
     }
 
     _isConfigured = true;

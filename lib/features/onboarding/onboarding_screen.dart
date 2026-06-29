@@ -273,6 +273,20 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
                 ),
                 const SizedBox(height: 12),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.black38,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.redAccent.withValues(alpha: 0.3)),
+                  ),
+                  child: Text(
+                    e.toString().replaceAll('Exception: ', ''),
+                    style: const TextStyle(color: Colors.redAccent, fontSize: 11, fontFamily: 'monospace'),
+                  ),
+                ),
+                const SizedBox(height: 12),
                 const Text(
                   'Troubleshooting Steps:',
                   style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 12),
